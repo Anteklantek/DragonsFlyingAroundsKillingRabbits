@@ -11,6 +11,7 @@ import terrains.Terrain;
 import java.util.Vector;
 import java.util.zip.ZipError;
 
+import org.lwjgl.util.vector.Matrix;
 import org.lwjgl.util.vector.Matrix4f;
 
 public class Maths {
@@ -27,40 +28,50 @@ public static Matrix4f createTransformationMatrix(Entity entity){
 	return matrix;
 	}
 
-public static Matrix4f updateTransformationMatrix(Player player){
-	Matrix4f matrix = player.transformationMatrix;
-	Matrix4f.translate(new Vector3f(player.pendingXTranslation,player.pendingYTranslation,player.pendingZTranslation), matrix, matrix);
-	Matrix4f.rotate((float) Math.toRadians(player.pendingYaw), player.upVector, matrix, matrix);
-	Matrix4f.rotate((float) Math.toRadians(player.pendingPitch), player.rightVecor, matrix, matrix);
-	Matrix4f.scale(new Vector3f(1,1,1), matrix, matrix);
+public static Matrix4f updateTranslationMatrix(Player player){
+	Matrix4f matrix = new Matrix4f();
+	Matrix4f.translate(player.getPosition(), matrix, matrix);
 	return matrix;
 	}
 
-private static void changeDirectionVectors(Player player, Matrix4f matrix){
-	Vector3f newFaceVector = transformVector(player.faceVector, matrix);
-	player.faceVector = newFaceVector;
-	Vector3f newRightVector = transformVector(player.rightVecor, matrix);
-	player.rightVecor = newRightVector;
-	Vector3f newUpVector = transformVector(player.upVector, matrix);
-	player.upVector = newUpVector;
+public static Matrix4f updateRotationMatrix(Player player){
+	Matrix4f matrix = player.rotationMatrix;
+	Matrix4f.rotate((float) Math.toDegrees(player.pendingYaw), player.upVector, matrix, matrix);
+	player.pendingYaw = 0;
+	changeDirectionVectors(player, matrix);
+	Matrix4f.rotate((float) Math.toDegrees(player.pendingPitch), player.rightVecor, matrix, matrix);
+	player.pendingPitch = 0;
+	changeDirectionVectors(player, matrix);
+	Matrix4f.rotate((float) Math.toDegrees(player.pendingRoll), player.faceVector, matrix, matrix);
+	player.pendingRoll = 0;
+	changeDirectionVectors(player, matrix);
+	return matrix;
+	}
+
+public static Matrix4f createTranslationMatrix(Player player){
+	Matrix4f matrix = new Matrix4f();
+	Matrix4f.translate(player.getPosition(), matrix, matrix);
+	return matrix;
 }
 
-private static Vector3f transformVector(Vector3f vectorForTransformation,Matrix4f transformation){
+public static Matrix4f createRotationMatrix(Player player){
+	Matrix4f matrix = new Matrix4f();
+	return matrix;
+}
+
+
+private static void changeDirectionVectors(Player player, Matrix4f matrix){
+	transformVector(player.faceVector, matrix);
+	transformVector(player.rightVecor, matrix);
+	transformVector(player.upVector, matrix);
+}
+
+private static void transformVector(Vector3f vectorForTransformation,Matrix4f transformation){
 	if(vectorForTransformation==null)vectorForTransformation=new Vector3f();
 	Vector4f vec4=Matrix4f.transform(transformation, new Vector4f((float)vectorForTransformation.x,(float)vectorForTransformation.y,(float)vectorForTransformation.z,1), null);
 	vectorForTransformation.x=vec4.x;
 	vectorForTransformation.y=vec4.y;
 	vectorForTransformation.z=vec4.z;
-	return vectorForTransformation;
-}
-
-private static void resetPendingTransformations(Player player){
-	player.pendingPitch = 0;
-	player.pendingRoll = 0;
-	player.pendingYaw = 0;
-	player.pendingXTranslation = 0;
-	player.pendingYTranslation = 0;
-	player.pendingZTranslation = 0;
 }
 
 public static Matrix4f createTransformationMatrix(Terrain terrain){

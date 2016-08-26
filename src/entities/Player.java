@@ -1,24 +1,23 @@
 package entities;
 
-import javax.imageio.spi.IIOServiceProvider;
-
-import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import Toolbox.Maths;
 import models.TexturedModel;
-import renderEngine.DisplayManager;
 
 public class Player extends Entity{
 	
 	private static final float SPEED = 0.1f;
-	private static final float TURN_SPEED = 0.8f;
-	private static final float TURN_SPEED_ROLL = 10.0f;
+	private static final float TURN_SPEED = 0.00008f;
+	private static final float TURN_SPEED_ROLL = 0.00008f;
 
 	
-	public Matrix4f transformationMatrix;
+	public Matrix4f translationMatrix;
+	public Matrix4f rotationMatrix;
+	
+	private float currentSpeed = SPEED;
 	
 	public Vector3f rightVecor;
 	public Vector3f faceVector;
@@ -27,31 +26,40 @@ public class Player extends Entity{
 	public float pendingYaw;
 	public float pendingRoll;
 	public float pendingPitch;
-	public float pendingXTranslation;
-	public float pendingYTranslation;
-	public float pendingZTranslation;
 	
 	public Player(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ, float sclae) {
 		super(model, position, rotX, rotY, rotZ, sclae);
 		this.rightVecor = new Vector3f(0,0,-1);
 		this.upVector = new Vector3f(0,1,0);
 		this.faceVector = new Vector3f(-1,0,0);
-		transformationMatrix = Maths.createNewTransformationMatrix(this);
+		translationMatrix = Maths.createTranslationMatrix(this);
+		rotationMatrix = Maths.createRotationMatrix(this);
 	}
 	
 	public void move(){
 		checkInputs();
 		
 		faceVector.normalise(faceVector);
-		faceVector.scale(SPEED);
+		if(currentSpeed == 0){
+			currentSpeed = 0.0000000000001f;
+		}
+		faceVector.scale(currentSpeed);
 		
-		pendingXTranslation = faceVector.x;
-		pendingYTranslation = faceVector.y;
-		pendingZTranslation = faceVector.z;
 		
+		increasePosition(faceVector.x, faceVector.y, faceVector.z);
+		System.out.println(this);
 	}
 	
 	private void checkInputs(){
+		
+//		if(Keyboard.isKeyDown(Keyboard.KEY_UP)){
+//			this.currentSpeed += SPEED;
+//		} else if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
+//			this.currentSpeed -= SPEED;
+//		} else {
+//			currentSpeed = 0;
+//		}
+//		
 		
 		if(Keyboard.isKeyDown(Keyboard.KEY_D)){
 			this.pendingYaw = -TURN_SPEED;
@@ -78,17 +86,19 @@ public class Player extends Entity{
 		}
 	}
 
-	public void updateTransformationMatrix(){
-		this.transformationMatrix = Maths.updateTransformationMatrix(this);
+	public void updateMatrixes(){
+		translationMatrix = Maths.updateTranslationMatrix(this);
+		rotationMatrix = Maths.updateRotationMatrix(this);
 	}
 
 	@Override
 	public String toString() {
-		return "Player [transformationMatrix=" + transformationMatrix + ", rightVecor=" + rightVecor + ", faceVector="
-				+ faceVector + ", upVector=" + upVector + ", pendingYaw=" + pendingYaw + ", pendingRoll=" + pendingRoll
-				+ ", pendingPitch=" + pendingPitch + ", pendingXTranslation=" + pendingXTranslation
-				+ ", pendingYTranslation=" + pendingYTranslation + ", pendingZTranslation=" + pendingZTranslation + "]";
+		return "Player [translationMatrix=" + translationMatrix + ", rotationMatrix=" + rotationMatrix
+				+ ", currentSpeed=" + currentSpeed + ", rightVecor=" + rightVecor + ", faceVector=" + faceVector
+				+ ", upVector=" + upVector + ", pendingYaw=" + pendingYaw + ", pendingRoll=" + pendingRoll
+				+ ", pendingPitch=" + pendingPitch + "]";
 	}
 	
 	
+
 }

@@ -66,8 +66,9 @@ public class EntityRenderer {
 	private void prepareInstance(Entity entity){
 		Matrix4f transformationMatrix = null;
 		if(entity instanceof Player){
-			((Player)entity).updateTransformationMatrix();;
-			transformationMatrix = ((Player)entity).transformationMatrix;
+			Player player = ((Player)entity);
+			player.updateMatrixes();
+			transformationMatrix = Matrix4f.mul(player.translationMatrix, player.rotationMatrix, null);
 		}else{
 			transformationMatrix = Maths.createTransformationMatrix(entity);
 		}
