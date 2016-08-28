@@ -35,13 +35,11 @@ public static Matrix4f updateTranslationMatrix(Player player){
 	}
 
 public static Matrix4f updateRotationMatrix(Player player){
-	Matrix4f matrix = player.rotationMatrix;
+	Matrix4f matrix = new Matrix4f();
 	Matrix4f.rotate((float) Math.toDegrees(player.pendingYaw), player.upVector, matrix, matrix);
 	player.pendingYaw = 0;
-	changeDirectionVectors(player, matrix);
 	Matrix4f.rotate((float) Math.toDegrees(player.pendingPitch), player.rightVecor, matrix, matrix);
 	player.pendingPitch = 0;
-	changeDirectionVectors(player, matrix);
 	Matrix4f.rotate((float) Math.toDegrees(player.pendingRoll), player.faceVector, matrix, matrix);
 	player.pendingRoll = 0;
 	changeDirectionVectors(player, matrix);
@@ -54,7 +52,7 @@ public static Matrix4f createTranslationMatrix(Player player){
 	return matrix;
 }
 
-public static Matrix4f createRotationMatrix(Player player){
+public static Matrix4f createIdentityMatrix(){
 	Matrix4f matrix = new Matrix4f();
 	return matrix;
 }
@@ -87,15 +85,21 @@ public static Matrix4f createTransformationMatrix(Terrain terrain){
 
 
 public static Matrix4f createViewMatrix(Camera camera){
-	Matrix4f viewMatrix = new Matrix4f();
-	viewMatrix.setIdentity();
-	Matrix4f.rotate((float) Math.toRadians(camera.getPitch()), new Vector3f(1,0,0), viewMatrix, viewMatrix);
-	Matrix4f.rotate((float) Math.toRadians(camera.getYaw()), new Vector3f(0,1,0), viewMatrix, viewMatrix);
-	Matrix4f.rotate((float) Math.toRadians(camera.getRoll()), new Vector3f(0,0,1), viewMatrix, viewMatrix);
-	Vector3f cameraPosition = camera.getPosition();
-	Vector3f negativeCameraPosition = new Vector3f(-cameraPosition.x, -cameraPosition.y,-cameraPosition.z);
-	Matrix4f.translate(negativeCameraPosition, viewMatrix, viewMatrix);
-	return viewMatrix;
+	
+	Vector3f cameraPos = calculateCameraPos(camera);
+	
+	return lookAt(cameraPos, camera.player.getPosition(), new Vector3f(0,1,0));
+}
+
+private static Vector3f calculateCameraPos(Camera camera) {
+	float distanceFromPlayer = 60;
+	Vector3f playerPosition = camera.player.getPosition();
+	Vector3f playerFaceVector = camera.player.faceVector;
+	Vector3f minusFaceVector = new Vector3f(-playerFaceVector.x,-playerFaceVector.y,-playerFaceVector.z);
+	minusFaceVector.normalise(minusFaceVector);
+	minusFaceVector.scale(distanceFromPlayer);
+	Vector3f cameraPosition = new Vector3f(playerPosition.x + minusFaceVector.x,playerPosition.y + minusFaceVector.y + 9,playerPosition.z + minusFaceVector.z);
+	return cameraPosition;
 }
 
 public static Matrix4f createNewTransformationMatrix(Player player){
@@ -104,5 +108,43 @@ public static Matrix4f createNewTransformationMatrix(Player player){
 	return matrix;
 
 }
+
+public static Matrix4f lookAt(Vector3f eye, Vector3f center, Vector3f up) {
+
+    Vector3f f = Vector3f.sub(center, eye,null).normalise(null);
+    Vector3f u = up.normalise(null);
+    Vector3f s = Vector3f.cross(f, u, null);
+    u = Vector3f.cross(s, f,null);
+
+    Matrix4f result = new Matrix4f();
+    result.m00 = s.x;
+    result.m10= s.y;
+    result.m20= s.z;
+    result.m01= u.x;
+    result.m11= u.y;
+    result.m21= u.z;
+    result.m02= -f.x;
+    result.m12= -f.y;
+    result.m22= -f.z;
+        
+     result.translate(new Vector3f(-eye.x,-eye.y,-eye.z));
+    return result;
+}
+
+
+public static double distanceBeetween(Vector3f start, Vector3f end){
+	float x1 = start.x;
+	float y1 = start.y;
+	float z1 = start.z;
+	
+	float x2 = end.x;
+	float y2 = end.y;
+	float z2 = end.z;
+	
+	return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2));
+}
+
+
+
 
 } 

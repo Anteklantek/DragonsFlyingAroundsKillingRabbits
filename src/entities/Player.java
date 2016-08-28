@@ -9,15 +9,17 @@ import models.TexturedModel;
 
 public class Player extends Entity{
 	
-	private static final float SPEED = 0.1f;
-	private static final float TURN_SPEED = 0.00008f;
-	private static final float TURN_SPEED_ROLL = 0.00008f;
+	private static final float SPEED = 0.01f;
+	private static final float TURN_SPEED = 0.0004f;
+	private static final float TURN_SPEED_ROLL = 0.016f;
 
 	
 	public Matrix4f translationMatrix;
 	public Matrix4f rotationMatrix;
 	
-	private float currentSpeed = SPEED;
+	public Matrix4f keepDirectionMatrix;
+	
+	private float currentSpeed = 5*SPEED;
 	
 	public Vector3f rightVecor;
 	public Vector3f faceVector;
@@ -33,62 +35,59 @@ public class Player extends Entity{
 		this.upVector = new Vector3f(0,1,0);
 		this.faceVector = new Vector3f(-1,0,0);
 		translationMatrix = Maths.createTranslationMatrix(this);
-		rotationMatrix = Maths.createRotationMatrix(this);
+		rotationMatrix = Maths.createIdentityMatrix();
+		keepDirectionMatrix = Maths.createIdentityMatrix();
 	}
 	
 	public void move(){
 		checkInputs();
 		
 		faceVector.normalise(faceVector);
-		if(currentSpeed == 0){
-			currentSpeed = 0.0000000000001f;
+		if(currentSpeed <= 0){
+			currentSpeed = 0.000001f;
 		}
 		faceVector.scale(currentSpeed);
 		
 		
 		increasePosition(faceVector.x, faceVector.y, faceVector.z);
-		System.out.println(this);
 	}
 	
 	private void checkInputs(){
 		
-//		if(Keyboard.isKeyDown(Keyboard.KEY_UP)){
-//			this.currentSpeed += SPEED;
-//		} else if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
-//			this.currentSpeed -= SPEED;
-//		} else {
-//			currentSpeed = 0;
-//		}
-//		
+		if(Keyboard.isKeyDown(Keyboard.KEY_UP)){
+			this.currentSpeed += SPEED;
+		} else if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
+			this.currentSpeed -= SPEED;
+			}
+		
 		
 		if(Keyboard.isKeyDown(Keyboard.KEY_D)){
 			this.pendingYaw = -TURN_SPEED;
 		} else if(Keyboard.isKeyDown(Keyboard.KEY_A)){
 			this.pendingYaw = TURN_SPEED;
-		} else {
-			pendingYaw = 0;
 		}
 		
-		if(Keyboard.isKeyDown(Keyboard.KEY_E)){
-			this.pendingRoll = TURN_SPEED_ROLL;
-		} else if(Keyboard.isKeyDown(Keyboard.KEY_Q)){
-			this.pendingRoll = -TURN_SPEED_ROLL;
-		} else {
-			pendingRoll = 0;
-		}
+//		if(Keyboard.isKeyDown(Keyboard.KEY_E)){
+//			this.pendingRoll = TURN_SPEED_ROLL;
+//		} else if(Keyboard.isKeyDown(Keyboard.KEY_Q)){
+//			this.pendingRoll = -TURN_SPEED_ROLL;
+//		} else {
+//			pendingRoll = 0;
+//		}
 		
 		if(Keyboard.isKeyDown(Keyboard.KEY_S)){
-			this.pendingPitch = -TURN_SPEED;
-		} else if(Keyboard.isKeyDown(Keyboard.KEY_W)){
 			this.pendingPitch = TURN_SPEED;
-		} else {
-			pendingPitch = 0;
+		} else if(Keyboard.isKeyDown(Keyboard.KEY_W)){
+			this.pendingPitch = -TURN_SPEED;
 		}
 	}
+	
 
+	
 	public void updateMatrixes(){
 		translationMatrix = Maths.updateTranslationMatrix(this);
 		rotationMatrix = Maths.updateRotationMatrix(this);
+		keepDirectionMatrix = Matrix4f.mul(rotationMatrix,keepDirectionMatrix, null);
 	}
 
 	@Override

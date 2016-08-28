@@ -2,6 +2,7 @@ package engineTester;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -10,7 +11,11 @@ import javax.xml.crypto.Data;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Vector3f;
 
+import Toolbox.Maths;
+import entities.Bullet;
+import entities.BulletSpawner;
 import entities.Camera;
+import entities.EnemySpawner;
 import entities.Entity;
 import entities.Light;
 import entities.Player;
@@ -93,21 +98,35 @@ public class MainGameLoop {
 		
 		TexturedModel playerTexturedModel = new TexturedModel(playerRawModel, new ModelTexture(loader.loadTexture("texture")));
 		
-		Player player = new Player(playerTexturedModel, new Vector3f(300,2,300), 0, 0, 0, 1);
+		Player player = new Player(playerTexturedModel, new Vector3f(300,70,300), 0, 0, 0, 0.8f);
 		
 		Camera camera = new Camera(player);
+		
+		BulletSpawner bulletSpawner = new BulletSpawner(loader,player);
+		
+		EnemySpawner enemySpawner = new EnemySpawner(loader);
 		
 		MasterRenderer renderer = new MasterRenderer();
 		while(!Display.isCloseRequested()){
 			camera.move();
 			player.move();
+			bulletSpawner.work();
+			bulletSpawner.removeTooFarBullets();
 			renderer.processEntity(player);
 			for(Entity entity : entities){
 				renderer.processEntity(entity);
 			}
-			
+			for(Bullet bullet : bulletSpawner.getBullets()){
+				renderer.processEntity(bullet);
+			}
+			enemySpawner.rotateEnemies();
+			for(Entity entity : enemySpawner.enemies){
+				renderer.processEntity(entity);
+			}
 			renderer.processTerrain(terrain);
 			renderer.render(light, camera);
+			
+			checkCollisionsAndDeleteHitEnemies(bulletSpawner, enemySpawner);
 			
 			DisplayManager.updateDisplay();
 		}
@@ -118,4 +137,16 @@ public class MainGameLoop {
 
 	}
 
+	
+	
+	private static void checkCollisionsAndDeleteHitEnemies(BulletSpawner bulletSpawner, EnemySpawner enemySpawner){
+		for(Entity bullet : bulletSpawner.getBullets()){
+			for (Iterator<Entity> iterator = enemySpawner.enemies.iterator(); iterator.hasNext(); ) {
+			    Entity enemy = iterator.next();
+			    if (Maths.distanceBeetween(bullet.getPosition(), enemy.getPosition()) < 3) {
+			        iterator.remove();
+			    }
+			}
+		}
+	}
 }

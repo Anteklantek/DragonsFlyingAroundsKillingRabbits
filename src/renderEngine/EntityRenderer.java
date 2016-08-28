@@ -68,7 +68,7 @@ public class EntityRenderer {
 		if(entity instanceof Player){
 			Player player = ((Player)entity);
 			player.updateMatrixes();
-			transformationMatrix = Matrix4f.mul(player.translationMatrix, player.rotationMatrix, null);
+			transformationMatrix = Matrix4f.mul(player.translationMatrix, player.keepDirectionMatrix, null);
 		}else{
 			transformationMatrix = Maths.createTransformationMatrix(entity);
 		}
